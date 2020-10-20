@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style type="text/css">
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+        }
+    </style>
+</head>
+
+<body>
+
+    <canvas id="myCanvas">
+        Your browser does not support the HTML5 canvas tag.</canvas>
+
+    <script>
+        var cellSize = 2 // visual size of each cell
+        var c = document.getElementById("myCanvas");
+        var ctx = c.getContext("2d");
+
+        // set the canv as to match browser window
+        c.width = window.innerWidth;
+        c.height = window.innerHeight;
+
+        // on window size change, update the cell number
+        window.addEventListener('resize', () => {
+            c.width = window.innerWidth;
+            c.height = window.innerHeight;
+            var map = ctx.getImageData(0, 0, c.width, c.height)
+        });
+
+        var map = ctx.getImageData(0, 0, c.width, c.height)
+
+        /* function dot(
+            x, y, // index of the cell to fill
+            fillStyle // 1: default color, 0: clear
+        ) {
+            let pos = (x + y * map.width) << 2
+            map.data[pos] = 255
+            map.data[pos + 3] = 255
+        } */
+
+        function distance(x1, y1, x2, y2) {
+            var a = x1 - x2;
+            var b = y1 - y2;
+            return Math.sqrt(a * a + b * b);
+        }
+
+        var ants = []
+        var nAnt = 100
+        var minDist = 5
+
+        var nestX = 70
+        var nextY = 70
+        var nextR = 50
+
+        class Ant {
+            constructor(x, y) {
+                this.setPos(x, y)
+                this.clearForce()
+            }
+
+            setPos(x, y) {
+                this.x = x
+                this.y = y
+            }
+
+            computeForce() {
+                ants.forEach(ant => {
+                    if (ant == this)
+                        return
+                    var dist = this.distance(ant)
+                    if (dist < minDist) {
+                        if (dist == 0) {
+                            let r = Math.random() * 2 * Math.PI
+                            this.fx = Math.cos(r) * minDist
+                            this.fy = Math.sin(r) * minDist
+                        } else {
+                            this.fx = (this.x - ant.x) * (minDist - dist) / dist
+                            this.fy = (this.y - ant.y) * (minDist - dist) / dist
+                        }
+                    }
+                })
+            }
+
+            clearForce() {
+                this.fx = 0;
+                this.fy = 0;
+            }
+
+            draw() {
+                this.x += this.fx
+                this.y += this.fy
+                ctx.beginPath()
+                ctx.arc(this.x, this.y, 2, 0, 2 * Math.PI)
+                ctx.fillStyle = '#000'
+                ctx.fill()
+                this.clearForce();
+            }
+
+            distance(ant) {
+                return distance(this.x, this.y, ant.x, ant.y)
+            }
+        }
+
+
+        for (let i = 0; i < nAnt; ++i) {
+            ants[i] = new Ant(nestX, nextY)
+        }
+        for (let i = 0; i < nAnt; ++i) {
+            ants[i].draw()
+        }
+
+        // time interval scheduled infinite loop
+        setInterval(function () {
+            ctx.putImageData(map, 0, 0)
+            ctx.beginPath()
+            ctx.arc(nestX, nextY, nextR, 0, 2 * Math.PI)
+            ctx.fillStyle = '#bbb'
+            ctx.fill()
+
+            ants.forEach(ant => ant.computeForce())
+            ants.forEach(ant => ant.draw())
+        }, 100);
+    </script>
+
+</body>
+
+</html>
