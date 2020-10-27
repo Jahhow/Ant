@@ -106,6 +106,18 @@
             }
         }
 
+        class Food {
+            constructor(x, y, quantity) {
+                this.x = x
+                this.y = y
+                this.quantity = quantity
+            }
+        }
+
+        var foods = []
+        var totalFoodQuantity = 0;
+        var targetFoodQuantity = 100;
+
 
         for (let i = 0; i < nAnt; ++i) {
             ants[i] = new Ant(nestX, nextY)
@@ -114,13 +126,38 @@
             ants[i].draw()
         }
 
+        function drawCircle(x, y, radius, color) {
+            ctx.beginPath()
+            ctx.arc(x, y, radius, 0, 2 * Math.PI)
+            ctx.fillStyle = color
+            ctx.fill()
+        }
+
         // time interval scheduled infinite loop
         setInterval(function () {
+            if (totalFoodQuantity < targetFoodQuantity) {
+                let quantity = Math.random() * targetFoodQuantity;
+                let x = Math.floor(Math.random() * c.width)
+                let y = Math.floor(Math.random() * c.height)
+                let closestFoodPile = null
+                foods.forEach(food => {
+                    if (distance(food.x, food.y, x, y) < 10)
+                        closestFoodPile = food
+                })
+                if (closestFoodPile == null) {
+                    foods.push(new Food(x, y, quantity))
+                } else {
+                    closestFoodPile.quantity += quantity
+                }
+                totalFoodQuantity += quantity
+            }
+
             ctx.putImageData(map, 0, 0)
-            ctx.beginPath()
-            ctx.arc(nestX, nextY, nextR, 0, 2 * Math.PI)
-            ctx.fillStyle = '#bbb'
-            ctx.fill()
+
+            drawCircle(nestX, nextY, nextR, '#ddd')
+            foods.forEach(food => {
+                drawCircle(food.x, food.y, Math.sqrt(food.quantity) * 2, '#ffa647')
+            })
 
             ants.forEach(ant => ant.computeForce())
             ants.forEach(ant => ant.draw())
