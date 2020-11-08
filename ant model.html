@@ -52,20 +52,30 @@
         var ants = []
         var nAnt = 100
         var minDist = 5
+        var antSpeed = 3
+        const fatToEndurance = 1000
 
         var nestX = 70
-        var nextY = 70
-        var nextR = 50
+        var nestY = 70
+        var nestR = 50
 
         class Ant {
             constructor(x, y) {
                 this.setPos(x, y)
                 this.clearForce()
+                this.endurance = 4000
+                this.fat = 40
+                this.hasFood = false
             }
 
             setPos(x, y) {
                 this.x = x
                 this.y = y
+            }
+
+            addForce(fx, fy) {
+                this.fx += fx;
+                this.fy += fy;
             }
 
             computeForce() {
@@ -76,11 +86,11 @@
                     if (dist < minDist) {
                         if (dist == 0) {
                             let r = Math.random() * 2 * Math.PI
-                            this.fx = Math.cos(r) * minDist
-                            this.fy = Math.sin(r) * minDist
+                            this.fx += Math.cos(r) * minDist
+                            this.fy += Math.sin(r) * minDist
                         } else {
-                            this.fx = (this.x - ant.x) * (minDist - dist) / dist
-                            this.fy = (this.y - ant.y) * (minDist - dist) / dist
+                            this.fx += (this.x - ant.x) * (minDist - dist) / dist
+                            this.fy += (this.y - ant.y) * (minDist - dist) / dist
                         }
                     }
                 })
@@ -106,31 +116,40 @@
             }
         }
 
+        function drawCircle(x, y, radius, color) {
+            ctx.beginPath()
+            ctx.arc(x, y, radius, 0, 2 * Math.PI)
+            ctx.fillStyle = color
+            ctx.fill()
+        }
+
         class Food {
             constructor(x, y, quantity) {
                 this.x = x
                 this.y = y
                 this.quantity = quantity
             }
+
+            getRadius() {
+                return Math.sqrt(this.quantity) * 2
+            }
+
+            draw() {
+                drawCircle(this.x, this.y, this.getRadius(), '#ffa647')
+            }
         }
 
         var foods = []
+        var nestFood = new Food(nestX, nestY, 0)
         var totalFoodQuantity = 0;
         var targetFoodQuantity = 100;
 
 
         for (let i = 0; i < nAnt; ++i) {
-            ants[i] = new Ant(nestX, nextY)
+            ants[i] = new Ant(nestX, nestY)
         }
         for (let i = 0; i < nAnt; ++i) {
             ants[i].draw()
-        }
-
-        function drawCircle(x, y, radius, color) {
-            ctx.beginPath()
-            ctx.arc(x, y, radius, 0, 2 * Math.PI)
-            ctx.fillStyle = color
-            ctx.fill()
         }
 
         // time interval scheduled infinite loop
@@ -152,11 +171,69 @@
                 totalFoodQuantity += quantity
             }
 
+            for (let i = 0; i < ants.length; ++i) {
+                let ant = ants[i]
+                if (ant.hasFood) {
+                    if (ant.endurance > 100) {
+                        let dx = nestX - ant.x;
+                        let dy = nestY - ant.y;
+                        let dist = distance(dx, dy, 0, 0)
+                        let fx = dx * antSpeed / dist
+                        let fy = dy * antSpeed / dist
+                        ant.addForce(fx, fy)
+                    } else if (ant.fat > 5) {
+                        --ant.fat
+                        ant.endurance += fatToEndurance
+                    } else {
+                        ant.hasFood = false
+                        ++ant.fat
+                    }
+                } else {
+                    if (ant.endurance > 100) {
+                        if (Math.random() < .8) {
+                            let dx = foods[0].x - ant.x;
+                            let dy = foods[0].y - ant.y;
+                            let dist = distance(dx, dy, 0, 0)
+                            let fx = dx * antSpeed / dist
+                            let fy = dy * antSpeed / dist
+                            ant.addForce(fx, fy)
+                            ant.endurance--
+                            if (dist <= foods[0].getRadius()) {
+                                ant.hasFood = true
+                                foods[0].quantity--
+                                totalFoodQuantity--
+                                if (foods[0].quantity <= 0) {
+                                    foods.splice(0, 1)
+                                }
+                            }
+                        }
+                    } else if (ant.fat > 5) {
+                        --ant.fat
+                        ant.endurance += fatToEndurance
+                    } else {
+                        --ant.fat
+                        ant.endurance += fatToEndurance
+                        let dx = nestX - ant.x;
+                        let dy = nestY - ant.y;
+                        let dist = distance(dx, dy, 0, 0)
+                        let fx = dx * antSpeed / dist
+                        let fy = dy * antSpeed / dist
+                        ant.addForce(fx, fy)
+                    }
+                }
+
+                if (ant.fat <= 0 || ant.endurance <= 0) {
+                    // die
+                    ants.splice(i, 1)
+                    i--
+                }
+            }
+
             ctx.putImageData(map, 0, 0)
 
-            drawCircle(nestX, nextY, nextR, '#ddd')
+            drawCircle(nestX, nestY, nestR, '#ddd')
             foods.forEach(food => {
-                drawCircle(food.x, food.y, Math.sqrt(food.quantity) * 2, '#ffa647')
+                drawCircle(food.x, food.y, food.getRadius(), '#ffa647')
             })
 
             ants.forEach(ant => ant.computeForce())
