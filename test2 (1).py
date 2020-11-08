@@ -73,16 +73,19 @@ class Ant(pygame.sprite.Sprite):
 		self.type = random.randint(0,1)
 		
 		if self.type == 1:
-			if self.position_x > self.nest_position_x + 15:
-				if self.position_y > self.nest_position_y +15:
-					self.quad = (-1,-1)
-				else:
-					self.quad = (-1,1)
+			self.computeQuad()
+	
+	def computeQuad(self):
+		if self.position_x > self.nest_position_x + 15:
+			if self.position_y > self.nest_position_y +15:
+				self.quad = (-1,-1)
 			else:
-				if self.position_y > self.nest_position_y +15:
-					self.quad = (1,-1)
-				else:
-					self.quad = (1,1)		
+				self.quad = (-1,1)
+		else:
+			if self.position_y > self.nest_position_y +15:
+				self.quad = (1,-1)
+			else:
+				self.quad = (1, 1)
 			
 	def update(self):
 		if self.state == "search":
@@ -98,21 +101,23 @@ class Ant(pygame.sprite.Sprite):
 				self.state = "backhome"
 			else:
 				x = random.randint(-5,5)
-				while(self.position_x + x<=0 or self.position_x + x >= 800 - size):
+				while (self.position_x + x <= 0 or self.position_x + x >= window_width - size):
+					self.type = 0
 					x = random.randint(-5,5)
 				
 				y = random.randint(-5,5)
-				while(self.position_y + y<=0 or self.position_y + y >= 800 - size):
+				while(self.position_y + y<=0 or self.position_y + y >= window_height - size):
+					self.type = 0
 					y = random.randint(-5,5)
 				
 				if self.type == 1:
 					while(x*self.quad[0] > 0 and y*self.quad[1] > 0):
 						x = random.randint(-5,5)
-						while(self.position_x + x<=0 or self.position_x + x >= 800 - size):
+						while(self.position_x + x<=0 or self.position_x + x >= window_width - size):
 							x = random.randint(-5,5)
 					
 						y = random.randint(-5,5)
-						while(self.position_y + y<=0 or self.position_y + y >= 800 - size):
+						while(self.position_y + y<=0 or self.position_y + y >= window_height - size):
 							y = random.randint(-5,5)
 				
 				
@@ -143,6 +148,9 @@ class Ant(pygame.sprite.Sprite):
 					all_list.add(ant)
 				
 				self.state = "search"
+				self.type = random.randint(0, 1)
+				if self.type == 1:
+					self.computeQuad()
 				# 補充食物到 window
 				if random.randint(1,10) >= 6:
 					food = Food(RED)
