@@ -125,10 +125,7 @@ class Ant(pygame.sprite.Sprite):
                                 max_phero = (
                                     pheromap[x][y], dx,dy)
                 if max_phero[0] > 0:
-                    self.dx,self.dy=max_phero[1], max_phero[2]
-                    self.position_x += self.dx
-                    self.position_y += self.dy
-                    self.atan2=math.atan2(self.dy,self.dx)
+                    self.move(max_phero[1], max_phero[2])
 
                 else:
                     x = random.randint(-5, 5)
@@ -149,10 +146,7 @@ class Ant(pygame.sprite.Sprite):
                             while(self.position_y + y <= 0 or self.position_y + y >= 800 - size):
                                 y = random.randint(-5, 5)
 
-                    self.dx,self.dy=x,y
-                    self.position_x += self.dx
-                    self.position_y += self.dy
-                    self.atan2=math.atan2(self.dy,self.dx)
+                    self.move(x, y)
 
                 self.rect.topleft = (self.position_x, self.position_y)
 
@@ -183,12 +177,7 @@ class Ant(pygame.sprite.Sprite):
             
             nextDistance = math.sqrt(x * x + y * y)
             scale = backhome_speed / nextDistance
-            self.dx = x * scale
-            self.dy = y * scale
-            self.position_x += self.dx
-            self.position_y += self.dy
-            self.atan2=math.atan2(self.dy,self.dx)
-
+            self.move(x * scale, y * scale)
             self.rect.topleft = (self.position_x, self.position_y)
             self.health -= 1
             pheromap[int(self.position_x)][int(self.position_y)] += 50
@@ -198,6 +187,12 @@ class Ant(pygame.sprite.Sprite):
                 pygame.sprite.Sprite.kill(self)
             else:
                 self.health -= 1
+    def move(self, dx, dy):
+        self.dx = dx
+        self.dy = dy
+        self.position_x += dx
+        self.position_y += dy
+        self.atan2=math.atan2(dy,dx)
 
 
 class Food(pygame.sprite.Sprite):
