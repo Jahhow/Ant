@@ -18,7 +18,7 @@ food_sum = 50
 
 food_odor = 20
 backhome_speed = 5
-
+momentum = .5
 
 nest_list = pygame.sprite.Group()
 ant_list = pygame.sprite.Group()
@@ -45,7 +45,8 @@ class Nest(pygame.sprite.Sprite):
         self.image = pygame.Surface([nest_size, nest_size])
         self.image.fill(color)
         self.rect = self.image.get_rect()
-        self.rect.topleft = (self.position_x, self.position_y)
+        self.rect.topleft = (self.position_x-nest_size//2,
+                             self.position_y-nest_size//2)
 
         for i in range(ant_sum):
             ant = Ant(self.position_x, self.position_y, antcolor)
@@ -59,9 +60,9 @@ class Ant(pygame.sprite.Sprite):
 
         # init position (in nest)
         self.position_x = random.randint(
-            nest_position_x, nest_position_x + nest_size - size)
+            nest_position_x-nest_size//2, nest_position_x-nest_size//2 + nest_size - size)
         self.position_y = random.randint(
-            nest_position_y, nest_position_y + nest_size - size)
+            nest_position_y-nest_size//2, nest_position_y-nest_size//2 + nest_size - size)
 
         self.nest_position_x = nest_position_x
         self.nest_position_y = nest_position_y
@@ -74,6 +75,7 @@ class Ant(pygame.sprite.Sprite):
         self.rect.topleft = (self.position_x, self.position_y)
         self.dx, self.dy = (0, 0)
         self.atan2 = 0
+        self.clearPheromone = False
 
         # health
         self.health = random.randint(1000, 1200)
@@ -109,6 +111,7 @@ class Ant(pygame.sprite.Sprite):
                 self.health += 100  # 先吃一點補體力
                 self.state = "backhome"
                 pheromap[self.position_x][self.position_y] += 50
+                self.clearPheromone = False
             else:
                 max_phero = (0,
                              0,  # dx
@@ -130,11 +133,15 @@ class Ant(pygame.sprite.Sprite):
                                     pheromap[x][y], dx, dy)
                 if max_phero[0] > 0:
                     if max_phero[1] == 0 and max_phero[2] == 0:
-                        pheromap[self.position_x+max_phero[1]][self.position_y+max_phero[2]] = 0
+                        self.clearPheromone = True
                     else:
                         self.move(max_phero[1], max_phero[2])
+                    if self.clearPheromone:
+                        pheromap[self.position_x+max_phero[1]
+                                 ][self.position_y+max_phero[2]] = 0
 
                 else:
+                    self.clearPheromone = False
                     x = random.randint(-5, 5)
                     while(self.position_x + x <= 0 or self.position_x + x >= 800 - size):
                         x = random.randint(-5, 5)
@@ -165,6 +172,7 @@ class Ant(pygame.sprite.Sprite):
                 self.color = self.search_color
                 self.image.fill(self.color)
                 self.health = random.randint(1000, 1200)
+                self.clearPheromone = False
 
                 for i in range(1):
                     ant = Ant(self.nest_position_x,
@@ -181,7 +189,6 @@ class Ant(pygame.sprite.Sprite):
 
             x = self.nest_position_x - self.position_x
             y = self.nest_position_y - self.position_y
-
             nestDistance = math.sqrt(x * x + y * y)
             scale = backhome_speed / nestDistance
             self.move(int(x * scale), int(y * scale))
@@ -196,11 +203,11 @@ class Ant(pygame.sprite.Sprite):
                 self.health -= 1
 
     def move(self, dx, dy):
-        self.dx = dx
-        self.dy = dy
-        self.position_x += dx
-        self.position_y += dy
-        self.atan2 = math.atan2(dy, dx)
+        self.dx = int(momentum*dx+(1-momentum)*self.dx)
+        self.dy = int(momentum*dy+(1-momentum)*self.dy)
+        self.position_x += self.dx
+        self.position_y += self.dy
+        self.atan2 = math.atan2(self.dy, self.dx)
 
 
 class Food(pygame.sprite.Sprite):
@@ -229,6 +236,9 @@ class Food(pygame.sprite.Sprite):
             foodmap[self.position_x][self.position_y] -= 1
         if self.health == 0:
             pygame.sprite.Sprite.kill(self)
+        else:
+            self.image = pygame.Surface([self.health, self.health])
+            self.image.fill(self.color)
 
 
 def main():
