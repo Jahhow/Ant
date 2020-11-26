@@ -133,32 +133,27 @@ class Ant(pygame.sprite.Sprite):
                                     pheromap[x][y], dx, dy)
                 if max_phero[0] > 0:
                     if max_phero[1] == 0 and max_phero[2] == 0:
-                        self.clearPheromone = True
-                    else:
-                        self.move(max_phero[1], max_phero[2])
+                            self.clearPheromone = True
                     if self.clearPheromone:
                         pheromap[self.position_x+max_phero[1]
                                  ][self.position_y+max_phero[2]] = 0
+                    self.move(max_phero[1], max_phero[2])
 
                 else:
                     self.clearPheromone = False
                     x = random.randint(-5, 5)
-                    while(self.position_x + x <= 0 or self.position_x + x >= 800 - size):
-                        x = random.randint(-5, 5)
 
                     y = random.randint(-5, 5)
-                    while(self.position_y + y <= 0 or self.position_y + y >= 800 - size):
-                        y = random.randint(-5, 5)
 
                     if self.type == 1:
-                        while(x*self.quad[0] > 0 and y*self.quad[1] > 0):
-                            x = random.randint(-5, 5)
-                            while(self.position_x + x <= 0 or self.position_x + x >= 800 - size):
-                                x = random.randint(-5, 5)
-
-                            y = random.randint(-5, 5)
-                            while(self.position_y + y <= 0 or self.position_y + y >= 800 - size):
-                                y = random.randint(-5, 5)
+                        if self.quad[0] > 0:
+                            x = random.randint(-5, 0)
+                        else:
+                            x = random.randint(0, 5)
+                        if self.quad[1] > 0:
+                            y = random.randint(-5, 0)
+                        else:
+                            y = random.randint(0, 5)
 
                     self.move(x, y)
 
@@ -191,7 +186,7 @@ class Ant(pygame.sprite.Sprite):
             y = self.nest_position_y - self.position_y
             nestDistance = math.sqrt(x * x + y * y)
             scale = backhome_speed / nestDistance
-            self.move(int(x * scale), int(y * scale))
+            self.move(x * scale, y * scale)
             self.rect.topleft = (self.position_x, self.position_y)
             self.health -= 1
             pheromap[self.position_x][self.position_y] += 50
@@ -203,10 +198,12 @@ class Ant(pygame.sprite.Sprite):
                 self.health -= 1
 
     def move(self, dx, dy):
-        self.dx = int(momentum*dx+(1-momentum)*self.dx)
-        self.dy = int(momentum*dy+(1-momentum)*self.dy)
-        self.position_x += self.dx
-        self.position_y += self.dy
+        self.dx = momentum*self.dx+(1-momentum)*dx
+        self.dy = momentum*self.dy+(1-momentum)*dy
+        self.position_x += round(self.dx)
+        self.position_y += round(self.dy)
+        self.position_x=min(max(0,self.position_x), window_width-size)
+        self.position_y=min(max(0,self.position_y), window_height-size)
         self.atan2 = math.atan2(self.dy, self.dx)
 
 
