@@ -17,7 +17,7 @@ ant_sum = 50
 food_sum = 50
 
 food_odor = 20
-backhome_speed=5
+backhome_speed = 5
 
 
 nest_list = pygame.sprite.Group()
@@ -108,14 +108,18 @@ class Ant(pygame.sprite.Sprite):
                 self.image.fill(self.color)
                 self.health += 100  # 先吃一點補體力
                 self.state = "backhome"
+                pheromap[self.position_x][self.position_y] += 50
             else:
-                max_phero = (0, 0, 0)
+                max_phero = (0,
+                             0,  # dx
+                             0  # dy
+                             )
                 minRadian = (2*math.pi)
-                for y in range(max(0, int(self.position_y-5)), min(window_height-1, int(self.position_y+6))):
-                    for x in range(max(0, int(self.position_x-5)), min(window_width-1, int(self.position_x+6))):
+                for y in range(max(0, self.position_y-5), min(window_height-1, self.position_y+6)):
+                    for x in range(max(0, self.position_x-5), min(window_width-1, self.position_x+6)):
                         if pheromap[x][y] > max_phero[0]:
                             dx, dy = x - self.position_x, y - self.position_y
-                            radian = math.atan2(dy,dx)
+                            radian = math.atan2(dy, dx)
                             radian = abs(
                                 self.atan2 - radian) % (2 * math.pi)
                             if radian > math.pi:
@@ -123,9 +127,12 @@ class Ant(pygame.sprite.Sprite):
                             if radian < minRadian:
                                 minRadian = radian
                                 max_phero = (
-                                    pheromap[x][y], dx,dy)
+                                    pheromap[x][y], dx, dy)
                 if max_phero[0] > 0:
-                    self.move(max_phero[1], max_phero[2])
+                    if max_phero[1] == 0 and max_phero[2] == 0:
+                        pheromap[self.position_x+max_phero[1]][self.position_y+max_phero[2]] = 0
+                    else:
+                        self.move(max_phero[1], max_phero[2])
 
                 else:
                     x = random.randint(-5, 5)
@@ -174,25 +181,26 @@ class Ant(pygame.sprite.Sprite):
 
             x = self.nest_position_x - self.position_x
             y = self.nest_position_y - self.position_y
-            
-            nextDistance = math.sqrt(x * x + y * y)
-            scale = backhome_speed / nextDistance
-            self.move(x * scale, y * scale)
+
+            nestDistance = math.sqrt(x * x + y * y)
+            scale = backhome_speed / nestDistance
+            self.move(int(x * scale), int(y * scale))
             self.rect.topleft = (self.position_x, self.position_y)
             self.health -= 1
-            pheromap[int(self.position_x)][int(self.position_y)] += 50
+            pheromap[self.position_x][self.position_y] += 50
 
         elif self.state == "dead":
             if self.health == 0:
                 pygame.sprite.Sprite.kill(self)
             else:
                 self.health -= 1
+
     def move(self, dx, dy):
         self.dx = dx
         self.dy = dy
         self.position_x += dx
         self.position_y += dy
-        self.atan2=math.atan2(dy,dx)
+        self.atan2 = math.atan2(dy, dx)
 
 
 class Food(pygame.sprite.Sprite):
