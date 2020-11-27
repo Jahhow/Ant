@@ -18,7 +18,7 @@ food_sum = 50
 
 food_odor = 20
 backhome_speed = 5
-momentum = .5
+momentum = 0.5
 
 nest_list = pygame.sprite.Group()
 ant_list = pygame.sprite.Group()
@@ -45,8 +45,10 @@ class Nest(pygame.sprite.Sprite):
         self.image = pygame.Surface([nest_size, nest_size])
         self.image.fill(color)
         self.rect = self.image.get_rect()
-        self.rect.topleft = (self.position_x-nest_size//2,
-                             self.position_y-nest_size//2)
+        self.rect.topleft = (
+            self.position_x - nest_size // 2,
+            self.position_y - nest_size // 2,
+        )
 
         for i in range(ant_sum):
             ant = Ant(self.position_x, self.position_y, antcolor)
@@ -60,9 +62,11 @@ class Ant(pygame.sprite.Sprite):
 
         # init position (in nest)
         self.position_x = random.randint(
-            nest_position_x-nest_size//2, nest_position_x-nest_size//2 + nest_size - size)
+            nest_position_x - nest_size // 2, nest_position_x + nest_size // 2 - size
+        )
         self.position_y = random.randint(
-            nest_position_y-nest_size//2, nest_position_y-nest_size//2 + nest_size - size)
+            nest_position_y - nest_size // 2, nest_position_y + nest_size // 2 - size
+        )
 
         self.nest_position_x = nest_position_x
         self.nest_position_y = nest_position_y
@@ -76,6 +80,7 @@ class Ant(pygame.sprite.Sprite):
         self.dx, self.dy = (0, 0)
         self.atan2 = 0
         self.clearPheromone = False
+        self.maxPheroXY = None
 
         # health
         self.health = random.randint(1000, 1200)
@@ -85,13 +90,13 @@ class Ant(pygame.sprite.Sprite):
         self.type = random.randint(0, 1)
 
         if self.type == 1:
-            if self.position_x > self.nest_position_x + 15:
-                if self.position_y > self.nest_position_y + 15:
+            if self.position_x > self.nest_position_x:
+                if self.position_y > self.nest_position_y:
                     self.quad = (-1, -1)
                 else:
                     self.quad = (-1, 1)
             else:
-                if self.position_y > self.nest_position_y + 15:
+                if self.position_y > self.nest_position_y:
                     self.quad = (1, -1)
                 else:
                     self.quad = (1, 1)
@@ -113,47 +118,60 @@ class Ant(pygame.sprite.Sprite):
                 pheromap[self.position_x][self.position_y] += 50
                 self.clearPheromone = False
             else:
-                max_phero = (0,
-                             0,  # dx
-                             0  # dy
-                             )
-                minRadian = (2*math.pi)
-                for y in range(max(0, self.position_y-5), min(window_height-1, self.position_y+6)):
-                    for x in range(max(0, self.position_x-5), min(window_width-1, self.position_x+6)):
+                max_phero = (0, 0, 0)  # dx  # dy
+                minRadian = 2 * math.pi
+                for y in range(
+                    max(0, self.position_y - 5),
+                    min(window_height - 1, self.position_y + 6),
+                ):
+                    for x in range(
+                        max(0, self.position_x - 5),
+                        min(window_width - 1, self.position_x + 6),
+                    ):
+                        if (self.position_x, self.position_y) == (x, y):
+                            continue
                         if pheromap[x][y] > max_phero[0]:
                             dx, dy = x - self.position_x, y - self.position_y
                             radian = math.atan2(dy, dx)
-                            radian = abs(
-                                self.atan2 - radian) % (2 * math.pi)
+                            radian = abs(self.atan2 - radian) % (2 * math.pi)
                             if radian > math.pi:
-                                radian = 2 * math.pi-radian
+                                radian = 2 * math.pi - radian
                             if radian < minRadian:
                                 minRadian = radian
-                                max_phero = (
-                                    pheromap[x][y], dx, dy)
+                                max_phero = (pheromap[x][y], dx, dy)
                 if max_phero[0] > 0:
-                    if max_phero[1] == 0 and max_phero[2] == 0:
-                            self.clearPheromone = True
+                    pheroXY = (
+                        self.position_x + max_phero[1],
+                        self.position_y + max_phero[2]
+                    )
+                    if self.maxPheroXY == pheroXY:
+                        self.clearPheromone = not pygame.sprite.spritecollide(
+                            self, nest_list, False
+                        )
+                        # if not self.clearPheromone:
+                        #     self.atan2+=math.pi
                     if self.clearPheromone:
-                        pheromap[self.position_x+max_phero[1]
-                                 ][self.position_y+max_phero[2]] = 0
-                    self.move(max_phero[1], max_phero[2])
+                        pheromap[pheroXY[0]][pheroXY[1]] = 0
+                    self.move(
+                        max_phero[1], max_phero[2], smooth=self.maxPheroXY!=pheroXY
+                    )
+                    self.maxPheroXY=pheroXY
 
                 else:
                     self.clearPheromone = False
                     x = random.randint(-5, 5)
-
                     y = random.randint(-5, 5)
 
+                    a = 4
                     if self.type == 1:
                         if self.quad[0] > 0:
-                            x = random.randint(-5, 0)
+                            x = random.randint(-5, a)
                         else:
-                            x = random.randint(0, 5)
+                            x = random.randint(-a, 5)
                         if self.quad[1] > 0:
-                            y = random.randint(-5, 0)
+                            y = random.randint(-5, a)
                         else:
-                            y = random.randint(0, 5)
+                            y = random.randint(-a, 5)
 
                     self.move(x, y)
 
@@ -167,11 +185,11 @@ class Ant(pygame.sprite.Sprite):
                 self.color = self.search_color
                 self.image.fill(self.color)
                 self.health = random.randint(1000, 1200)
-                self.clearPheromone = False
 
                 for i in range(1):
-                    ant = Ant(self.nest_position_x,
-                              self.nest_position_y, self.search_color)
+                    ant = Ant(
+                        self.nest_position_x, self.nest_position_y, self.search_color
+                    )
                     ant_list.add(ant)
                     all_list.add(ant)
 
@@ -197,13 +215,17 @@ class Ant(pygame.sprite.Sprite):
             else:
                 self.health -= 1
 
-    def move(self, dx, dy):
-        self.dx = momentum*self.dx+(1-momentum)*dx
-        self.dy = momentum*self.dy+(1-momentum)*dy
+    def move(self, dx, dy, smooth=True):
+        if smooth:
+            self.dx = momentum * self.dx + (1 - momentum) * dx
+            self.dy = momentum * self.dy + (1 - momentum) * dy
+        else:
+            self.dx = dx
+            self.dy = dy
         self.position_x += round(self.dx)
         self.position_y += round(self.dy)
-        self.position_x=min(max(0,self.position_x), window_width-size)
-        self.position_y=min(max(0,self.position_y), window_height-size)
+        self.position_x = min(max(0, self.position_x), window_width - size)
+        self.position_y = min(max(0, self.position_y), window_height - size)
         self.atan2 = math.atan2(self.dy, self.dx)
 
 
@@ -225,7 +247,7 @@ class Food(pygame.sprite.Sprite):
         self.image = pygame.Surface([size, size])
         self.image.fill(color)
         self.rect = self.image.get_rect()
-        self.rect.topleft = (self.position_x*size, self.position_y*size)
+        self.rect.topleft = (self.position_x * size, self.position_y * size)
 
     def update(self):
         if pygame.sprite.spritecollide(self, ant_list, False):
@@ -240,9 +262,9 @@ class Food(pygame.sprite.Sprite):
 
 def main():
     pygame.init()
-# load window surface
+    # load window surface
     window = pygame.display.set_mode((window_width, window_height))
-    pygame.display.set_caption('bug nest')
+    pygame.display.set_caption("bug nest")
     window.fill(WHITE)
 
     for i in range(food_sum):
@@ -264,7 +286,7 @@ def main():
 
     clock = pygame.time.Clock()
 
-    while(True):
+    while True:
         clock.tick(FPS)
 
         for event in pygame.event.get():
@@ -285,5 +307,5 @@ def main():
         pygame.display.update()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
