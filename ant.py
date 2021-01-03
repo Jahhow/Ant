@@ -29,6 +29,7 @@ foodmap = [[0 for y in range(window_height)] for x in range(window_width)]
 pheromap = [[0 for y in range(window_height)] for x in range(window_width)]
 
 BLACK = (0, 0, 0)
+NEST_COLOR = (150, 150, 100)
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 BLUE = (0, 0, 0xE6)
@@ -203,11 +204,12 @@ class Ant(pygame.sprite.Sprite):
             x = self.nest_position_x - self.position_x
             y = self.nest_position_y - self.position_y
             nestDistance = math.sqrt(x * x + y * y)
-            scale = backhome_speed / nestDistance
-            self.move(x * scale, y * scale)
-            self.rect.topleft = (self.position_x, self.position_y)
-            self.health -= 1
-            pheromap[self.position_x][self.position_y] += 50
+            if nestDistance != 0:
+                scale = backhome_speed / nestDistance
+                self.move(x * scale, y * scale)
+                self.rect.topleft = (self.position_x, self.position_y)
+                self.health -= 1
+                pheromap[self.position_x][self.position_y] += 50
 
         elif self.state == "dead":
             if self.health == 0:
@@ -274,15 +276,15 @@ def main():
 
     nest_position_x = 300  # random.randint(300,400)
     nest_position_y = 200  # random.randint(200,300)
-    nest = Nest(nest_position_x, nest_position_y, BLACK, BLUE)
+    nest = Nest(nest_position_x, nest_position_y, NEST_COLOR, BLUE)
     nest_list.add(nest)
-    all_list.add(nest)
+    #all_list.add(nest)
 
     nest_position_x = 600  # random.randint(500,600)
     nest_position_y = 400  # random.randint(300,400)
-    nest = Nest(nest_position_x, nest_position_y, BLACK, GREEN)
+    nest = Nest(nest_position_x, nest_position_y, NEST_COLOR, GREEN)
     nest_list.add(nest)
-    all_list.add(nest)
+    #all_list.add(nest)
 
     clock = pygame.time.Clock()
 
@@ -302,6 +304,7 @@ def main():
         # reflesh
         window.fill(WHITE)
 
+        nest_list.draw(window)
         all_list.draw(window)
 
         pygame.display.update()
