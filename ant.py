@@ -210,6 +210,16 @@ class Ant(pygame.sprite.Sprite):
             else:
                 self.health -= 1
 
+        if self.state != "dead":
+            floatHealth = max(0, min(1, self.health / 1200))
+            UNHEALTHY_COLOR = RED
+            color = []
+            for i in range(3):
+                color.append(self.color[i] * floatHealth + UNHEALTHY_COLOR[i] * (1 - floatHealth))
+            self.image.fill(color)
+            # alpha = max(0, min(255, self.health / 1200 * 255))
+            # self.image.set_alpha(alpha)
+
     def move(self, dx, dy, smooth=True):
         if smooth:
             self.dx = momentum * self.dx + (1 - momentum) * dx
