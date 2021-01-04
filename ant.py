@@ -117,7 +117,7 @@ class Ant(pygame.sprite.Sprite):
 
     def update(self):
         # 邊界碰撞檢測 -> 碰撞到就改成type 0
-        if self.position_x == 0 or self.position_x == window_width or self.position_y == 0 or self.position_y == window_height:
+        if self.position_x == 0 or self.position_x == window_width -size or self.position_y == 0 or self.position_y == window_height -size:
             self.type = 0
 
 
