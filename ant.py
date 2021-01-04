@@ -145,16 +145,9 @@ class Ant(pygame.sprite.Sprite):
                         self.position_x + max_phero[1],
                         self.position_y + max_phero[2]
                     )
-                    if self.maxPheroXY == pheroXY:
-                        self.clearPheromone = not pygame.sprite.spritecollide(
-                            self, nest_list, False
-                        )
-                        # if not self.clearPheromone:
-                        #     self.atan2+=math.pi
-                    if self.clearPheromone:
-                        pheromap[pheroXY[0]][pheroXY[1]] = 0
+                    pheromap[pheroXY[0]][pheroXY[1]] = max(0, pheromap[pheroXY[0]][pheroXY[1]]-5)
                     self.move(
-                        max_phero[1], max_phero[2], smooth=self.maxPheroXY!=pheroXY
+                        max_phero[1], max_phero[2], smooth=False #self.maxPheroXY != pheroXY
                     )
                     self.maxPheroXY=pheroXY
 
