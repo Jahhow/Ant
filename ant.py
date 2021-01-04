@@ -184,7 +184,7 @@ class Ant(pygame.sprite.Sprite):
                     )
                     for i in range(max(0, min(window_width, aromaXY[0] - 3)), max(0, min(window_width, aromaXY[0] + 3))):
                         for j in range(max(0, min(window_height, aromaXY[1] - 3)), max(0, min(window_height, aromaXY[1] + 3))):
-                            aromamap[i][j]-=50
+                            aromamap[i][j] = max(0, aromamap[i][j] - 50)
                 elif max_phero[0] > 0:
                     pheroXY = (
                         self.position_x + max_phero[1],
