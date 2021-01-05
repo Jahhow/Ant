@@ -13,7 +13,7 @@ size = 5
 nest_size = 30
 
 ant_sum = 50
-food_sum = 50
+food_sum = 10
 
 food_odor = 20
 
@@ -34,7 +34,7 @@ pheromap = [[0 for y in range(window_height)] for x in range(window_width)]
 aromamap = [[0 for y in range(window_height)] for x in range(window_width)]
 
 BLACK = (0, 0, 0)
-RED = (255, 0, 0)
+PINK = (255, 127, 127)
 GREEN = (0, 255, 0)
 BLUE = (0, 0, 0xE6)
 WHITE = (255, 255, 255)
@@ -255,7 +255,7 @@ class Ant(pygame.sprite.Sprite):
         
         if self.state != "dead":
             floatHealth = max(0, min(1, self.health / 1200))
-            UNHEALTHY_COLOR = RED
+            UNHEALTHY_COLOR = (200,0,0)
             color = []
             for i in range(3):
                 color.append(self.color[i] * floatHealth + UNHEALTHY_COLOR[i] * (1 - floatHealth))
@@ -287,7 +287,7 @@ class Food(pygame.sprite.Sprite):
         self.position_x = x
         self.position_y = y
 
-        self.health = random.randint(1, 10)
+        self.health = random.randint(1, 20)
 
         foodmap[x][y] += self.health
 
@@ -310,11 +310,6 @@ class Food(pygame.sprite.Sprite):
         if pygame.sprite.spritecollide(self, ant_list, False):
             self.health -= 1
             foodmap[self.position_x][self.position_y] -= 1
-            # 補充食物到 window
-            if random.randint(1, 10) >= 10:
-                food = Food(RED)
-                food_list.add(food)
-                all_list.add(food)
         if self.health == 0:
             pygame.sprite.Sprite.kill(self)
         else:
@@ -325,18 +320,19 @@ class Food(pygame.sprite.Sprite):
             #         if xpx + i >= 0 and xpx + i < window_width and ypx + j >= 0 and ypx + j < window_height:
             #             dist = max(.1, math.sqrt(i * i + j * j))
             #             aromamap[xpx+i][ypx+j] += 10/dist
-            self.image = pygame.Surface([self.health, self.health])
+            size = math.sqrt(self.health) * 4
+            self.image = pygame.Surface([size, size])
             self.image.fill(self.color)
 
 
 def add_food():
-    food = Food(RED)
+    food = Food(PINK)
     food_list.add(food)
     all_list.add(food)
 
 
 ADD_FOOD_EVENT = pygame.USEREVENT
-pygame.time.set_timer(ADD_FOOD_EVENT, 10000)
+pygame.time.set_timer(ADD_FOOD_EVENT, 2000)
 
 
 def main():
@@ -347,7 +343,7 @@ def main():
     window.fill(WHITE)
 
     for i in range(food_sum):
-        food = Food(RED)
+        food = Food(PINK)
         food_list.add(food)
         all_list.add(food)
 
@@ -365,6 +361,7 @@ def main():
 
     clock = pygame.time.Clock()
 
+    countAddFood = 0
     while True:
         clock.tick(FPS)
 
